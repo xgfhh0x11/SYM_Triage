@@ -64,35 +64,118 @@
   "payloads": [
     {
       "ioctl_code": 2621449604,
-      "input_buffer": "b'\\xa0\\x01\\x00\\x00AAAABBBB'",
+      "buffer_schema": [
+        {
+          "field": "msr_register",
+          "offset": 0,
+          "size": 4,
+          "role": "target_msr"
+        },
+        {
+          "field": "msr_value_low",
+          "offset": 4,
+          "size": 4,
+          "role": "kernel_write_value"
+        },
+        {
+          "field": "msr_value_high",
+          "offset": 8,
+          "size": 4,
+          "role": "kernel_write_value"
+        }
+      ],
       "description": "Critical MSR register write",
       "severity": "CRITICAL",
       "constraints": []
     },
     {
       "ioctl_code": 2621449604,
-      "input_buffer": "b'\\xa0\\x01\\x00\\x00AAAABBBB'",
+      "buffer_schema": [
+        {
+          "field": "msr_register",
+          "offset": 0,
+          "size": 4,
+          "role": "target_msr"
+        },
+        {
+          "field": "msr_value_low",
+          "offset": 4,
+          "size": 4,
+          "role": "kernel_write_value"
+        },
+        {
+          "field": "msr_value_high",
+          "offset": 8,
+          "size": 4,
+          "role": "kernel_write_value"
+        }
+      ],
       "description": "Critical MSR register write",
       "severity": "CRITICAL",
       "constraints": []
     },
     {
       "ioctl_code": 2621449616,
-      "input_buffer": "b'\\x00\\x00\\x00\\x80\\x04\\x00\\x00\\x00\\x00\\x00\\x00\\x00'",
+      "buffer_schema": [
+        {
+          "field": "memory_address",
+          "offset": 0,
+          "size": 4,
+          "role": "kernel_read_target"
+        },
+        {
+          "field": "read_size",
+          "offset": 4,
+          "size": 4,
+          "role": "kernel_read_size"
+        },
+        {
+          "field": "reserved",
+          "offset": 8,
+          "size": 4,
+          "role": "unused"
+        }
+      ],
       "description": "Arbitrary kernel memory read",
       "severity": "HIGH",
       "constraints": []
     },
     {
       "ioctl_code": 2621449620,
-      "input_buffer": "b'\\x00\\x00\\x00\\x80\\x04\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00'",
+      "buffer_schema": [
+        {
+          "field": "memory_address",
+          "offset": 0,
+          "size": 4,
+          "role": "kernel_write_target"
+        },
+        {
+          "field": "write_size",
+          "offset": 4,
+          "size": 4,
+          "role": "kernel_write_size"
+        },
+        {
+          "field": "reserved",
+          "offset": 8,
+          "size": 8,
+          "role": "unused"
+        }
+      ],
       "description": "Arbitrary kernel memory write",
       "severity": "CRITICAL",
       "constraints": []
     },
     {
       "ioctl_code": 2621449600,
-      "input_buffer": "b'AAAAAAAA'",
+      "buffer_schema": [
+        {
+          "field": "unclassified_input",
+          "offset": 0,
+          "size": 8,
+          "role": "unknown"
+        }
+      ],
       "description": "Potential buffer overflow in kernel",
       "severity": "HIGH",
       "constraints": []
@@ -191,5 +274,6 @@
       "exploit_count": 0,
       "exploits": []
     }
-  }
+  },
+  "fallback_ioctl_table_used": true
 }

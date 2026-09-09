@@ -17,7 +17,7 @@ class BinaryIOCTLExtractor:
         self.function_offsets = []
         
     def load_binary(self) -> bool:
-        """Binary dosyasını yükle"""
+        """Load the binary file"""
         try:
             with open(self.binary_path, 'rb') as f:
                 self.binary_data = f.read()

@@ -20,7 +20,7 @@ binary (.sys/.bin)
         ├─ state forking on conditional branches
         ├─ per-IOCTL handler analyzer
         │     (write_memory, read_memory, write_msr, ...)
-        ├─ Z3 solver wired for constraint solving
+        ├─ Z3 imported as a scaffold (not yet invoked)
         └─ classification of suspicious memory accesses
         │
         ▼
@@ -50,8 +50,10 @@ code via a lookup table keyed by the known WinRing0 codes
 
 ## Stage 2 — symbolic exploration (`custom_s2e_engine.py`)
 
-The symbolic engine works on the discovered IOCTL surface, not on raw
-binary lifted to an IR. For each IOCTL code it:
+This stage is pattern matching, not symbolic execution: branches are
+matched against known conditions rather than solved. It works on the
+discovered IOCTL surface, not on raw binary lifted to an IR. For each
+IOCTL code it:
 
 - Creates an `ExecutionState` with an initial empty constraint set.
 - Models the dispatcher's branch on the IOCTL code as a fork point.
@@ -65,9 +67,10 @@ binary lifted to an IR. For each IOCTL code it:
   - `PRIVILEGE_ESCALATION` — write to a critical MSR (e.g. MTRR).
   - `BUFFER_OVERFLOW` — declared write size exceeds the input buffer.
 
-- Z3 (`z3-solver`) is wired through `constraint_solver` for satisfiability
-  checks; the supplied case study reduces to inequality constraints that
-  solve in milliseconds.
+- Z3 (`z3-solver`) is imported and a `Solver` instance is constructed as
+  `constraint_solver`, but it is a scaffold for a future
+  constraint-solving backend: the current pass never adds constraints to
+  it or calls it, matching the honest description in the README.
 
 The engine bounds state explosion via `max_states` (default 1000) and
 `max_depth` (default 50).
@@ -99,7 +102,7 @@ critical, the four read-class IOCTLs as high.
   inlined dispatcher branches, and obfuscated code are not handled.
 - IOCTL buffer schemas are recovered heuristically; manual confirmation
   is required before acting on a classification.
-- Z3 is wired but the constraint encoder is simplified; production-grade
-  kernel ABI semantics are out of scope.
+- Z3 is imported but not invoked; a future constraint-encoding pass and
+  production-grade kernel ABI semantics are out of scope for now.
 - The case-study coverage is a single binary; broader coverage
   (e.g. DBUtil_2_3.sys, RTCore64.sys) is part of the roadmap.

@@ -67,7 +67,13 @@ class CustomS2EEngine:
         self.state_counter = 0
         self.max_states = 1000
         self.max_depth = 50
-        
+
+        # Set by _extract_ioctl_codes_from_binary(); True when the binary
+        # could not be parsed and the hardcoded WinRing0 table was used
+        # instead, so consumers of the JSON output can tell canned findings
+        # from binary-derived ones.
+        self.fallback_ioctl_table_used = False
+
         # Extract IOCTL codes from the binary
         self.ioctl_codes = self._extract_ioctl_codes_from_binary()
         
@@ -100,23 +106,26 @@ class CustomS2EEngine:
             analyzer = AdvancedBinaryAnalyzer(self.binary_path)
             if not analyzer.load_binary():
                 print("[CustomS2E] Failed to load binary, using known IOCTL codes")
+                self.fallback_ioctl_table_used = True
                 return self._get_known_ioctl_codes()
-            
+
             # Discover IOCTL codes
             ioctl_codes = analyzer.find_ioctl_codes_by_analysis()
-            
+
             # Map IOCTL codes to symbolic names
             ioctl_dict = {}
             for code in ioctl_codes:
                 name = self._get_ioctl_name(code)
                 ioctl_dict[code] = name
                 print(f"[CustomS2E] Found IOCTL: 0x{code:08X} - {name}")
-            
+
+            self.fallback_ioctl_table_used = False
             return ioctl_dict
-            
+
         except Exception as e:
             print(f"[CustomS2E] Error extracting IOCTL codes: {e}")
             print("[CustomS2E] Using known IOCTL codes as fallback")
+            self.fallback_ioctl_table_used = True
             return self._get_known_ioctl_codes()
     
     def _get_known_ioctl_codes(self) -> Dict[int, str]:
@@ -173,7 +182,15 @@ class CustomS2EEngine:
         return state
     
     def fork_state(self, parent_state: ExecutionState, condition: str) -> Tuple[ExecutionState, ExecutionState]:
-        """Fork the state into true/false paths"""
+        """Fork the state into true/false paths.
+
+        DEAD CODE: not called by run_analysis() or anything else in this
+        module — the current pipeline dispatches seeded test inputs
+        directly (see _generate_test_inputs / analyze_ioctl_handler)
+        rather than forking on branch conditions. Kept as documented,
+        unwired scaffolding for the state-forking design described in
+        docs/architecture.md.
+        """
         if len(self.states) >= self.max_states:
             print(f"[CustomS2E] Maximum states reached: {self.max_states}")
             return parent_state, parent_state
@@ -206,7 +223,14 @@ class CustomS2EEngine:
         return true_state, false_state
     
     def evaluate_condition(self, condition: str, state: ExecutionState) -> bool:
-        """Evaluate a condition and branch states accordingly"""
+        """Evaluate a condition and branch states accordingly.
+
+        DEAD CODE: not called by run_analysis() or anything else in this
+        module (and therefore _evaluate_ioctl_condition /
+        _evaluate_size_condition / _evaluate_pointer_condition below,
+        which only this method calls, are also unreachable). Kept as
+        documented, unwired scaffolding — see fork_state's note above.
+        """
         print(f"[CustomS2E] Evaluating condition: {condition}")
         
         # Simple condition evaluation (real S2E would call Z3 here)
@@ -245,21 +269,28 @@ class CustomS2EEngine:
         return False
     
     def check_memory_access(self, address: int, size: int, is_write: bool, state: ExecutionState) -> None:
-        """Inspect a memory access and classify any matched patterns"""
+        """Inspect a memory access and classify any matched patterns.
+
+        DEAD CODE: not called by run_analysis() or anything else in this
+        module — the per-IOCTL handler analyzers (_analyze_write_memory_ioctl
+        etc.) call _detect_arbitrary_write / _detect_arbitrary_read directly
+        instead. Kept as documented, unwired scaffolding — see fork_state's
+        note above.
+        """
         print(f"[CustomS2E] Memory access: 0x{address:x} ({'write' if is_write else 'read'}, {size} bytes)")
-        
-        # Kernel space kontrolü
+
+        # Kernel space check
         for start, end, name in self.kernel_regions:
             if start <= address < end:
                 print(f"[CustomS2E] KERNEL ACCESS DETECTED: {name} (0x{address:x})")
-                
-                # Exploit pattern tespit et
+
+                # Detect exploit pattern
                 if is_write:
                     self._detect_arbitrary_write(address, size, state)
                 else:
                     self._detect_arbitrary_read(address, size, state)
-                
-                # Memory access kaydet
+
+                # Record memory access
                 state.memory_accesses.append({
                     "address": address,
                     "size": size,
@@ -270,7 +301,7 @@ class CustomS2EEngine:
                 break
     
     def _detect_arbitrary_write(self, address: int, size: int, state: ExecutionState) -> None:
-        """Arbitrary write exploit'ini tespit et"""
+        """Detect an arbitrary-write exploit"""
         exploit = {
             "pattern": "ARBITRARY_WRITE",
             "severity": "CRITICAL",
@@ -284,7 +315,7 @@ class CustomS2EEngine:
         print(f"[CustomS2E] EXPLOIT DETECTED: ARBITRARY_WRITE at 0x{address:x}")
     
     def _detect_arbitrary_read(self, address: int, size: int, state: ExecutionState) -> None:
-        """Arbitrary read exploit'ini tespit et"""
+        """Detect an arbitrary-read exploit"""
         exploit = {
             "pattern": "ARBITRARY_READ",
             "severity": "HIGH",
@@ -312,7 +343,7 @@ class CustomS2EEngine:
             self._analyze_generic_ioctl(ioctl_code, input_buffer, state)
     
     def _analyze_write_memory_ioctl(self, input_buffer: bytes, state: ExecutionState) -> None:
-        """WRITE_MEMORY IOCTL'ini analiz et"""
+        """Analyze the WRITE_MEMORY IOCTL"""
         print("[CustomS2E] Analyzing WRITE_MEMORY IOCTL")
         
         if len(input_buffer) >= 16:
@@ -341,7 +372,7 @@ class CustomS2EEngine:
                 state.exploits.append(exploit)
     
     def _analyze_read_memory_ioctl(self, input_buffer: bytes, state: ExecutionState) -> None:
-        """READ_MEMORY IOCTL'ini analiz et"""
+        """Analyze the READ_MEMORY IOCTL"""
         print("[CustomS2E] Analyzing READ_MEMORY IOCTL")
         
         if len(input_buffer) >= 12:
@@ -358,7 +389,7 @@ class CustomS2EEngine:
                 self._detect_arbitrary_read(memory_address, read_size, state)
     
     def _analyze_write_msr_ioctl(self, input_buffer: bytes, state: ExecutionState) -> None:
-        """WRITE_MSR IOCTL'ini analiz et"""
+        """Analyze the WRITE_MSR IOCTL"""
         print("[CustomS2E] Analyzing WRITE_MSR IOCTL")
         
         if len(input_buffer) >= 12:
@@ -384,7 +415,7 @@ class CustomS2EEngine:
                 state.exploits.append(exploit)
     
     def _analyze_generic_ioctl(self, ioctl_code: int, input_buffer: bytes, state: ExecutionState) -> None:
-        """Genel IOCTL analizi"""
+        """Generic IOCTL analysis"""
         print(f"[CustomS2E] Analyzing generic IOCTL: 0x{ioctl_code:x}")
         
         # Buffer size check
@@ -400,11 +431,17 @@ class CustomS2EEngine:
             state.exploits.append(exploit)
     
     def generate_exploit_payloads(self) -> List[Dict]:
-        """Emit classification entries (one per detected pattern)"""
-        print("[CustomS2E] Generating exploit payloads...")
-        
+        """Emit classification descriptors (one per detected pattern).
+
+        Each descriptor names the IOCTL, the input-buffer field layout, and
+        which field reaches the kernel access — it does NOT construct a
+        packed exploit buffer targeting a concrete address. See the module
+        docstring: this engine classifies, it does not weaponise.
+        """
+        print("[CustomS2E] Generating classification descriptors...")
+
         payloads = []
-        
+
         for state in self.states:
             for exploit in state.exploits:
                 if exploit["pattern"] == "ARBITRARY_WRITE":
@@ -415,53 +452,67 @@ class CustomS2EEngine:
                     payload = self._generate_msr_payload(exploit)
                 else:
                     payload = self._generate_generic_payload(exploit)
-                
+
                 payloads.append(payload)
-        
+
         return payloads
-    
+
     def _generate_write_payload(self, exploit: Dict) -> Dict:
-        """Emit a write-class classification entry"""
+        """Classification descriptor for a write-class finding (no packed buffer)"""
         return {
             "ioctl_code": 0x9C402594,  # WRITE_MEMORY
-            "input_buffer": struct.pack('<I', exploit["address"]) + struct.pack('<I', exploit["size"]) + b'\x00' * 8,
+            "buffer_schema": [
+                {"field": "memory_address", "offset": 0, "size": 4, "role": "kernel_write_target"},
+                {"field": "write_size", "offset": 4, "size": 4, "role": "kernel_write_size"},
+                {"field": "reserved", "offset": 8, "size": 8, "role": "unused"}
+            ],
             "description": "Arbitrary kernel memory write",
             "severity": exploit["severity"],
             "constraints": exploit.get("constraints", [])
         }
-    
+
     def _generate_read_payload(self, exploit: Dict) -> Dict:
-        """Emit a read-class classification entry"""
+        """Classification descriptor for a read-class finding (no packed buffer)"""
         return {
             "ioctl_code": 0x9C402590,  # READ_MEMORY
-            "input_buffer": struct.pack('<I', exploit["address"]) + struct.pack('<I', exploit["size"]) + b'\x00' * 4,
+            "buffer_schema": [
+                {"field": "memory_address", "offset": 0, "size": 4, "role": "kernel_read_target"},
+                {"field": "read_size", "offset": 4, "size": 4, "role": "kernel_read_size"},
+                {"field": "reserved", "offset": 8, "size": 4, "role": "unused"}
+            ],
             "description": "Arbitrary kernel memory read",
             "severity": exploit["severity"],
             "constraints": exploit.get("constraints", [])
         }
-    
+
     def _generate_msr_payload(self, exploit: Dict) -> Dict:
-        """Emit an MSR-write classification entry"""
+        """Classification descriptor for an MSR-write finding (no packed buffer)"""
         return {
             "ioctl_code": 0x9C402584,  # WRITE_MSR
-            "input_buffer": struct.pack('<I', exploit["msr_register"]) + b'\x41\x41\x41\x41' + b'\x42\x42\x42\x42',
+            "buffer_schema": [
+                {"field": "msr_register", "offset": 0, "size": 4, "role": "target_msr"},
+                {"field": "msr_value_low", "offset": 4, "size": 4, "role": "kernel_write_value"},
+                {"field": "msr_value_high", "offset": 8, "size": 4, "role": "kernel_write_value"}
+            ],
             "description": "Critical MSR register write",
             "severity": exploit["severity"],
             "constraints": exploit.get("constraints", [])
         }
-    
+
     def _generate_generic_payload(self, exploit: Dict) -> Dict:
-        """Emit a generic classification entry"""
+        """Classification descriptor for an unclassified finding (no packed buffer)"""
         return {
             "ioctl_code": 0x9C402580,  # READ_MSR
-            "input_buffer": b'A' * 8,
+            "buffer_schema": [
+                {"field": "unclassified_input", "offset": 0, "size": 8, "role": "unknown"}
+            ],
             "description": exploit["description"],
             "severity": exploit["severity"],
             "constraints": exploit.get("constraints", [])
         }
     
     def run_analysis(self) -> Dict:
-        """Ana analiz fonksiyonu"""
+        """Main analysis function"""
         print("[CustomS2E] Starting WinRing0.sys analysis...")
         
         # Create the initial state
@@ -492,7 +543,7 @@ class CustomS2EEngine:
                 self.state_counter += 1
                 self.states.append(test_state)
                 
-                # IOCTL'i analiz et
+                # Analyze the IOCTL
                 self.analyze_ioctl_handler(ioctl_code_val, test_input, test_state)
         
         # Collect results
@@ -540,7 +591,7 @@ class CustomS2EEngine:
         for state in self.states:
             all_exploits.extend(state.exploits)
         
-        # Exploit'leri kategorize et
+        # Categorize exploits
         exploit_counts = {}
         for exploit in all_exploits:
             pattern = exploit["pattern"]
@@ -555,11 +606,12 @@ class CustomS2EEngine:
             "exploits": all_exploits,
             "exploit_counts": exploit_counts,
             "payloads": payloads,
-            "ioctl_analysis": self._analyze_ioctls()
+            "ioctl_analysis": self._analyze_ioctls(),
+            "fallback_ioctl_table_used": self.fallback_ioctl_table_used
         }
     
     def _analyze_ioctls(self) -> Dict:
-        """IOCTL'leri analiz et"""
+        """Analyze the IOCTLs"""
         ioctl_analysis = {}
         
         for ioctl_code, name in self.ioctl_codes.items():
@@ -584,7 +636,7 @@ class CustomS2EEngine:
         print(f"[CustomS2E] Results saved to: {output_file}")
 
 def main():
-    """Ana fonksiyon"""
+    """Main function"""
     print("=== Custom S2E Engine - WinRing0.sys Analysis ===\n")
     
     # Check the binary file
