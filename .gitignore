@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Output
+output/
+*.log
+
+# Binary samples — fetched separately, never committed.
+# See README for SHA-256 verification and download instructions.
+*.bin
+*.sys
+*.dll
+*.exe

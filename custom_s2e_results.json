@@ -1,0 +1,195 @@
+{
+  "_provenance": "Generated from custom_s2e_engine.py's internal WinRing0 IOCTL knowledge base (the `_get_known_ioctl_codes()` fallback path) — NOT from parsing a real WinRing0.sys binary. The IOCTL codes and names are accurate per public CVE references, but reachability paths, constraints, and 'exploit' classifications are illustrative rather than binary-derived. To regenerate against a real binary, place a SHA-256-verified WinRing0.sys next to the engine (see README) and run `python custom_s2e_engine.py`.",
+  "_expected_binary_sha256": "3ec5ad51e6879464dfbccb9f4ed76c6325056a42548d5994ba869da9c4c039a8",
+  "_regenerate_command": "python custom_s2e_engine.py",
+  "total_states": 23,
+  "total_exploits": 5,
+  "exploits": [
+    {
+      "pattern": "PRIVILEGE_ESCALATION",
+      "severity": "CRITICAL",
+      "msr_register": 416,
+      "description": "Writing to critical MSR register",
+      "path": [
+        "IOCTL_0x9c402584"
+      ]
+    },
+    {
+      "pattern": "PRIVILEGE_ESCALATION",
+      "severity": "CRITICAL",
+      "msr_register": 416,
+      "description": "Writing to critical MSR register",
+      "path": [
+        "IOCTL_0x9c402584"
+      ]
+    },
+    {
+      "pattern": "ARBITRARY_READ",
+      "severity": "HIGH",
+      "address": 2147483648,
+      "size": 4,
+      "description": "Ability to read arbitrary kernel memory",
+      "path": [
+        "IOCTL_0x9c402590"
+      ],
+      "constraints": []
+    },
+    {
+      "pattern": "ARBITRARY_WRITE",
+      "severity": "CRITICAL",
+      "address": 2147483648,
+      "size": 4,
+      "description": "Ability to write arbitrary kernel memory",
+      "path": [
+        "IOCTL_0x9c402594"
+      ],
+      "constraints": []
+    },
+    {
+      "pattern": "BUFFER_OVERFLOW",
+      "severity": "HIGH",
+      "size": 65536,
+      "description": "Potential buffer overflow in kernel",
+      "path": [
+        "IOCTL_0x9c402594"
+      ]
+    }
+  ],
+  "exploit_counts": {
+    "PRIVILEGE_ESCALATION": 2,
+    "ARBITRARY_READ": 1,
+    "ARBITRARY_WRITE": 1,
+    "BUFFER_OVERFLOW": 1
+  },
+  "payloads": [
+    {
+      "ioctl_code": 2621449604,
+      "input_buffer": "b'\\xa0\\x01\\x00\\x00AAAABBBB'",
+      "description": "Critical MSR register write",
+      "severity": "CRITICAL",
+      "constraints": []
+    },
+    {
+      "ioctl_code": 2621449604,
+      "input_buffer": "b'\\xa0\\x01\\x00\\x00AAAABBBB'",
+      "description": "Critical MSR register write",
+      "severity": "CRITICAL",
+      "constraints": []
+    },
+    {
+      "ioctl_code": 2621449616,
+      "input_buffer": "b'\\x00\\x00\\x00\\x80\\x04\\x00\\x00\\x00\\x00\\x00\\x00\\x00'",
+      "description": "Arbitrary kernel memory read",
+      "severity": "HIGH",
+      "constraints": []
+    },
+    {
+      "ioctl_code": 2621449620,
+      "input_buffer": "b'\\x00\\x00\\x00\\x80\\x04\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00'",
+      "description": "Arbitrary kernel memory write",
+      "severity": "CRITICAL",
+      "constraints": []
+    },
+    {
+      "ioctl_code": 2621449600,
+      "input_buffer": "b'AAAAAAAA'",
+      "description": "Potential buffer overflow in kernel",
+      "severity": "HIGH",
+      "constraints": []
+    }
+  ],
+  "ioctl_analysis": {
+    "0x9c402580": {
+      "name": "WR0_READ_MSR",
+      "exploit_count": 0,
+      "exploits": []
+    },
+    "0x9c402584": {
+      "name": "WR0_WRITE_MSR",
+      "exploit_count": 2,
+      "exploits": [
+        {
+          "pattern": "PRIVILEGE_ESCALATION",
+          "severity": "CRITICAL",
+          "msr_register": 416,
+          "description": "Writing to critical MSR register",
+          "path": [
+            "IOCTL_0x9c402584"
+          ]
+        },
+        {
+          "pattern": "PRIVILEGE_ESCALATION",
+          "severity": "CRITICAL",
+          "msr_register": 416,
+          "description": "Writing to critical MSR register",
+          "path": [
+            "IOCTL_0x9c402584"
+          ]
+        }
+      ]
+    },
+    "0x9c402588": {
+      "name": "WR0_READ_IO_PORT",
+      "exploit_count": 0,
+      "exploits": []
+    },
+    "0x9c40258c": {
+      "name": "WR0_WRITE_IO_PORT",
+      "exploit_count": 0,
+      "exploits": []
+    },
+    "0x9c402590": {
+      "name": "WR0_READ_MEMORY",
+      "exploit_count": 1,
+      "exploits": [
+        {
+          "pattern": "ARBITRARY_READ",
+          "severity": "HIGH",
+          "address": 2147483648,
+          "size": 4,
+          "description": "Ability to read arbitrary kernel memory",
+          "path": [
+            "IOCTL_0x9c402590"
+          ],
+          "constraints": []
+        }
+      ]
+    },
+    "0x9c402594": {
+      "name": "WR0_WRITE_MEMORY",
+      "exploit_count": 2,
+      "exploits": [
+        {
+          "pattern": "ARBITRARY_WRITE",
+          "severity": "CRITICAL",
+          "address": 2147483648,
+          "size": 4,
+          "description": "Ability to write arbitrary kernel memory",
+          "path": [
+            "IOCTL_0x9c402594"
+          ],
+          "constraints": []
+        },
+        {
+          "pattern": "BUFFER_OVERFLOW",
+          "severity": "HIGH",
+          "size": 65536,
+          "description": "Potential buffer overflow in kernel",
+          "path": [
+            "IOCTL_0x9c402594"
+          ]
+        }
+      ]
+    },
+    "0x9c402598": {
+      "name": "WR0_READ_PCI_CONFIG",
+      "exploit_count": 0,
+      "exploits": []
+    },
+    "0x9c40259c": {
+      "name": "WR0_WRITE_PCI_CONFIG",
+      "exploit_count": 0,
+      "exploits": []
+    }
+  }
+}

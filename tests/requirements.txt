@@ -1,0 +1,5 @@
+pytest>=7.0
+z3-solver>=4.12.0
+# Optional at runtime (advanced_binary_analyzer falls back to a built-in
+# struct parser if absent); installed here so CI exercises the pefile path.
+pefile>=2023.2.7

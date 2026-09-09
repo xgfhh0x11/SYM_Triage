@@ -1,0 +1,15 @@
+{
+  "_provenance": "PLACEHOLDER — regenerate via `python binary_ioctl_extractor.py WinRing0.sys` against a SHA-256-verified WinRing0.sys binary (see README § 'Obtaining the case-study sample'). The previously shipped contents were derived from a 12152-byte stub, not the real driver, and have been replaced with this placeholder so reviewers are not misled.",
+  "_expected_binary_sha256": "3ec5ad51e6879464dfbccb9f4ed76c6325056a42548d5994ba869da9c4c039a8",
+  "_regenerate_command": "python binary_ioctl_extractor.py WinRing0.sys --out binary_ioctl_analysis.json",
+  "binary_info": null,
+  "ioctl_codes": [],
+  "function_offsets": [],
+  "handler_analysis": [],
+  "summary": {
+    "total_ioctls": null,
+    "critical_ioctls": null,
+    "high_ioctls": null,
+    "functions_found": null
+  }
+}

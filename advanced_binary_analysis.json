@@ -1,0 +1,25 @@
+{
+  "_provenance": "PLACEHOLDER — regenerate via `python advanced_binary_analyzer.py WinRing0.sys` against a SHA-256-verified WinRing0.sys binary (see README § 'Obtaining the case-study sample'). The previously shipped contents reported `\"Invalid COFF header size\"` and `\"is_driver\": false` because they were generated from a 12152-byte stub, not the real driver. They have been replaced with this placeholder so reviewers are not misled.",
+  "_expected_binary_sha256": "3ec5ad51e6879464dfbccb9f4ed76c6325056a42548d5994ba869da9c4c039a8",
+  "_regenerate_command": "python advanced_binary_analyzer.py WinRing0.sys --out advanced_binary_analysis.json",
+  "binary_info": null,
+  "ioctl_analysis": {
+    "codes_found": [],
+    "total_codes": 0,
+    "hex_patterns": []
+  },
+  "string_analysis": {
+    "ioctl_strings": [],
+    "total_strings": 0
+  },
+  "pattern_analysis": {
+    "device_patterns": [],
+    "winring0_patterns": []
+  },
+  "summary": {
+    "is_driver": null,
+    "ioctl_codes_found": 0,
+    "patterns_found": 0,
+    "strings_found": 0
+  }
+}
